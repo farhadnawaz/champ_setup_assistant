@@ -92,26 +92,36 @@ class LegConfiguratorWidget(QWidget):
         self.setLayout(self.column)
 
     def on_urdf_path_load(self):
-        self.leg_tabs.insertTab(0, self.config_predict,  "Configuration")
-        self.leg_tabs.setCurrentIndex(0)
-        self.links_label.setVisible(True)
-        self.main.links_list.setVisible(True)
-        self.main.robot_viz.setVisible(True)
+            self.leg_tabs.insertTab(0, self.config_predict,  "Configuration")
+            self.leg_tabs.setCurrentIndex(0)
+            self.links_label.setVisible(True)
+            self.main.links_list.setVisible(True)
+            self.main.robot_viz.setVisible(True)
 
-        links = self.main.robot.link_names
-        link_no = 0
-        foot_no = 0
-        for link in links:
-            joint_name = self.main.robot.get_attached_joint(link)
-            if self.main.robot.joint_is_revolute(joint_name):
-                self.main.links_list.add_link(link)
-                self.links_list.append(link)
-                link_no += 1
-                if link_no % 3 == 0 or link_no == 0:
-                    foot_link = self.main.robot.foot_links[foot_no]
-                    self.links_list.append(foot_link)
-                    self.main.links_list.add_link(foot_link)
-                    foot_no += 1
+
+            links = self.main.robot.link_names
+            
+            link_no = 0
+            foot_no = 0
+            num_foot_links = len(self.main.robot.foot_links)
+
+
+            for link in links:
+                joint_name = self.main.robot.get_attached_joint(link)
+                if self.main.robot.joint_is_revolute(joint_name):
+                    self.main.links_list.add_link(link)
+                    self.links_list.append(link)
+                    link_no += 1
+
+
+                    if link_no % 3 == 0 or link_no == 0:
+                        if foot_no < num_foot_links:
+                                foot_link = self.main.robot.foot_links[foot_no]
+                                self.links_list.append(foot_link)
+                                self.main.links_list.add_link(foot_link)
+                                foot_no += 1
+                        else:
+                                print("Warning: No more foot links available.")
 
 
     def get_configuration(self):

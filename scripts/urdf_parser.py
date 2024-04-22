@@ -171,8 +171,9 @@ class URDFParser():
                 return xyz, rpy
     
     def link_has_child(self, link_name):
-        return self.robot.child_map.has_key(link_name)
-
+        result = link_name in self.robot.child_map
+        return result
+    
     def link_attached_to_base(self, link_name):
         attached_joint, parent_link = self.robot.parent_map[link_name]
         #add more filter - if it's attached to base, it's not an end link
@@ -234,51 +235,71 @@ class URDFParser():
         return filtered_end_links
 
     def get_max(self, end_links):
-        #this returns end links with more no of actuators
+        # This returns end links with the most number of actuators.
+
 
         new_end_links = []
         no_of_actuators = []
 
-        #get no of actuators for each link
+
+        # Get the number of actuators for each link.
         for link in end_links:
             no_of_actuators.append(self.get_no_of_actuators(link))
 
+
+        # Check if no_of_actuators is empty to avoid ValueError.
+        if not no_of_actuators:
+            # Handle the empty case. Options include returning an empty list
+            # or some default values. Adjust based on your application's logic.
+            return []
+
+
         max_actuator_count = max(no_of_actuators)
 
-        #add end_links that only has the max counted no of actuators
+
+        # Add end_links that only have the maximum counted number of actuators.
         for i in range(len(end_links)):
             if no_of_actuators[i] == max_actuator_count:
                 new_end_links.append(end_links[i])
 
+
         return new_end_links
 
-    def get_foot_links(self):
-        def get_common_string(str1,str2):
-            #returns common substring between two strings
-            #https://www.geeksforgeeks.org/sequencematcher-in-python-for-longest-common-substring
-            # initialize SequenceMatcher object with  
-            # input string 
-            seqMatch = SequenceMatcher(None,str1,str2) 
-        
-            # find match of longest sub-string 
-            # output will be like Match(a=0, b=0, size=5) 
-            match = seqMatch.find_longest_match(0, len(str1), 0, len(str2)) 
-        
-            # print longest substring 
-            if (match.size!=0): 
 
-                return (str1[match.a: match.a + match.size])  
-            else: 
+    def get_foot_links(self):
+
+        def get_common_string(str1, str2):
+            # Returns common substring between two strings
+            # https://www.geeksforgeeks.org/sequencematcher-in-python-for-longest-common-substring
+            seqMatch = SequenceMatcher(None, str1, str2)
+            match = seqMatch.find_longest_match(0, len(str1), 0, len(str2))
+            if match.size != 0:
+                return str1[match.a: match.a + match.size]
+            else:
                 return None
 
-        #get links that has no child
+
+        # Get links that have no child
         end_links = self.get_end_links()
         end_links = self.remove_manipulator(end_links)
         end_links = self.get_max(end_links)
 
-        foot_name = get_common_string(end_links[0], end_links[3])
-        ns =[]
-        for link in end_links:
-            ns.append(link.replace(foot_name, ""))
+
+        # Initialize variables to return in case end_links has fewer than 4 elements
+        ns = []
+
+
+        # Check if there are at least 4 elements in end_links before accessing
+        if len(end_links) >= 4:
+            foot_name = get_common_string(end_links[0], end_links[3])
+            for link in end_links:
+                ns.append(link.replace(foot_name, ""))
+        else:
+            # Handle the situation where there aren't enough links
+            # You might log a warning, raise an exception, or simply return empty lists
+            print("Warning: Not enough end links found. Expected at least 4 but got {}.".format(len(end_links)))
+            # Optionally set foot_name to None or a default value and adjust ns accordingly
+            foot_name = None
+
 
         return end_links, ns
